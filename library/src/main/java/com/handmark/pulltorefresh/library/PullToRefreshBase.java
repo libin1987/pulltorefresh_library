@@ -18,10 +18,12 @@ package com.handmark.pulltorefresh.library;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
@@ -486,7 +488,28 @@ public abstract class PullToRefreshBase<T extends View> extends LinearLayout imp
 			setState(State.MANUAL_REFRESHING, doScroll);
 		}
 	}
+	public void firstReFreshing(boolean doScroll) {
+		if (doScroll) {
+			new AsyncTask<Integer,Void,Integer>() {//该处是针对PullToRefreshScrollView控件的bug进行补充的
+				@SuppressWarnings("ResourceType")
+				@Override
+				protected Integer doInBackground(Integer... params) {
+					while(true){
+						if(mHeaderLayout.getHeight()>0) //已测量，则跳回到主线程执行postExecute()
+							return null;
+						SystemClock.sleep(200);//sleep一小段时间
+					}
+				}
 
+				@Override
+				protected void onPostExecute(Integer result) {
+					setRefreshing(true);
+				}
+			}.execute();
+		} else {
+			setRefreshing(false);
+		}
+	}
 	/**
 	 * @deprecated You should now call this method on the result of
 	 *             {@link #getLoadingLayoutProxy()}.
